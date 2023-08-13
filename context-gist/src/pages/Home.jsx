@@ -1,10 +1,38 @@
-import { useContext } from "react";
+import { useContext, useState, useEffect } from "react";
 import reactLogo from "../assets/react.svg";
 import "../App.css";
 import { Counter } from "../context/Counter";
+import axios from "axios";
 
 function Home() {
   const { count, setCount } = useContext(Counter);
+  const [images, setImages] = useState([]);
+  const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const result = await axios.get(
+        "https://api.pexels.com/v1/search?query=house&per_page=12&page=" + page,
+        {
+          headers: {
+            Authorization: import.meta.env.VITE_PEXEL_API_KEY,
+          },
+        }
+      );
+      {
+        images.length == 0
+          ? setImages(result.data.photos)
+          : setImages([...images, ...result.data.photos]);
+      }
+      setPage(result.data.page + 1);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <div className="App">
@@ -16,18 +44,23 @@ function Home() {
           <img src={reactLogo} className="logo react" alt="React logo" />
         </a>
       </div>
-      <h1>Vite + React Home Page</h1>
+      <h1>House</h1>
       <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
+        {images?.map((i, k) => {
+          return (
+            <div key={k} className="card-images">
+              <img
+                loading="lazy"
+                src={i?.src?.portrait}
+                alt=""
+                style={{ width: "100%", height: "100%" }}
+                srcSet=""
+              />
+            </div>
+          );
+        })}
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      <button onClick={fetchData}>LOAD MORE</button>
     </div>
   );
 }
